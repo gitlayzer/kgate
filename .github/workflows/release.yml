@@ -11,6 +11,10 @@ jobs:
   build-and-release:
     # 在最新的 Ubuntu Runner 上运行
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # 授予工作流写入仓库内容的权限（创建 Release 需要）
+
     steps:
       # 第一步：检出您的代码
       - name: Checkout code
