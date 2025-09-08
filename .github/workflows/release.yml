@@ -1,0 +1,47 @@
+# 工作流名称
+name: Release Go Binary
+
+# 触发条件：当一个以 'v' 开头的标签被推送到仓库时
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    # 在最新的 Ubuntu Runner 上运行
+    runs-on: ubuntu-latest
+    steps:
+      # 第一步：检出您的代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 第二步：设置 Go 环境
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24' # 您可以指定所需的 Go 版本
+
+      # 第三步：使用 Makefile 构建所有目标平台的应用
+      # Makefile 已经包含了版本信息注入的逻辑
+      - name: Build with Makefile
+        run: make all
+
+      # 第四步：将构建好的二进制文件打包成 .tar.gz 压缩包
+      - name: Package artifacts
+        run: |
+          # 从 bin 目录中打包，以避免在压缩包中包含 bin/ 路径
+          tar -czvf kgate-linux-amd64.tar.gz -C bin kgate-linux-amd64
+          tar -czvf kgate-mac-arm64.tar.gz -C bin kgate-mac-arm64
+
+      # 第五步：创建 Release 并上传构建产物
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          # 要上传的文件列表
+          files: |
+            kgate-linux-amd64.tar.gz
+            kgate-mac-arm64.tar.gz
+        env:
+          # GITHUB_TOKEN 是由 GitHub Actions 自动提供的，无需手动设置
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
